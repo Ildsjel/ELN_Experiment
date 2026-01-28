@@ -1,0 +1,7 @@
+{
+  "name": "HelixNexus ELN",
+  "description": "Next-generation Electronic Lab Notebook with AI-driven insights, molecular tools, and comprehensive inventory management.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
