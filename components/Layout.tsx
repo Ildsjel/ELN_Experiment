@@ -569,7 +569,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigat
           {children}
         </main>
       </div>
-      <ChatBot />
+      <ChatBot onNavigate={onNavigate} />
     </div>
   );
 };

@@ -80,7 +80,18 @@ export const chatWithData = async (history: {role: 'user' | 'model', content: st
         const chat = ai.chats.create({
             model: 'gemini-3-pro-preview',
             config: {
-                systemInstruction: "You are a helpful AI lab assistant for an ELN. Be concise, scientific, and precise."
+                systemInstruction: `You are a helpful AI lab assistant for an ELN. Be concise, scientific, and precise.
+                
+                You can suggest actions to the user using special Call-to-Action (CTA) syntax. 
+                If appropriate, suggest a next step using: [[CTA: Label | ViewName | ParamsJSON]].
+                
+                ViewNames are: dashboard, experiments, inventory, molecular, analytics, auditLog.
+                
+                Examples:
+                - "I can help you start a new experiment template." [[CTA: Create New Experiment | experiments | {"openCreate": true}]]
+                - "Check your inventory for low stock reagents." [[CTA: Open Inventory | inventory | {"tab": "list"}]]
+                - "View your equipment bookings here." [[CTA: Manage Equipment | inventory | {"tab": "equipment"}] ]
+                - "Check the molecular tools for CRISPR design." [[CTA: Open Molecular Tools | molecular | {}]]`
             },
             history: history.map(msg => ({
                 role: msg.role,
@@ -169,22 +180,28 @@ export const generateLabOverview = async (experiments: any[], samples: any[], ma
    if (!apiKey) return "API Key missing.";
 
    // Summarize data to reduce context size
-   const exps = experiments.slice(0, 15).map(e => `${e.id}: ${e.title} (${e.status})`);
-   const inv = samples.filter((s: any) => s.quantity.includes('0.') || s.quantity.includes('uL')).map((s: any) => s.name); 
+   const exps = experiments.slice(0, 20).map(e => `[${e.id}] ${e.title} - Status: ${e.status}. Content snippet: ${e.content.slice(0, 100)}...`);
+   const inv = samples.filter((s: any) => s.quantity.includes('0.') || s.quantity.includes('uL') || s.quantity.includes('units') && parseInt(s.quantity) < 5).map((s: any) => `${s.name} (${s.quantity})`); 
    const eq = machines.filter((m: any) => m.status !== 'Available').map((m: any) => `${m.name}: ${m.status}`);
 
    try {
      const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `
-          You are a Lab Manager AI. Provide a concise, professional summary (3-4 sentences) of the current lab situation based on this data.
-          Format the output as a coherent paragraph.
+          As a Senior Research Operations Analyst, provide a comprehensive executive summary of the lab's current state based on the provided data.
           
-          Recent Experiments data: ${exps.join('; ')}
-          Low Stock Items: ${inv.join(', ')}
-          Equipment Issues: ${eq.join(', ')}
+          Data Provided:
+          - Recent Experiments: ${exps.join(' | ')}
+          - Critically Low Inventory: ${inv.join(', ')}
+          - Equipment Status: ${eq.join(', ')}
 
-          Highlight critical bottlenecks (e.g., specific broken equipment, low stock) and general experiment progress. 
+          Your report MUST include:
+          1. **Executive Overview**: High-level summary of lab productivity.
+          2. **Key Scientific Insights**: Trends in experiment success/failures or significant findings.
+          3. **Operational Bottlenecks & Anomalies**: Mention "unworthy" or problematic data points, specific broken equipment, or inventory risks.
+          4. **Strategic Recommendations**: 2-3 actionable next steps to improve efficiency.
+
+          Format with Markdown headers (###) and bullet points. Be precise, professional, and insightful.
         `,
         config: {
             responseMimeType: "text/plain",

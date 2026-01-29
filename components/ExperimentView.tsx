@@ -4,7 +4,8 @@ import {
   Sparkles, CheckCircle2, Circle, Save, 
   MessageSquare, BrainCircuit, X, History,
   FlaskConical, Wand2, FilePenLine, Loader2, Check,
-  Mic, StopCircle, SpellCheck, AlignLeft, Undo
+  Mic, StopCircle, SpellCheck, AlignLeft, Undo, Search as SearchIcon,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Experiment, ExperimentStatus, AIAnalysisResult, ProtocolStep } from '../types';
 import { MOCK_EXPERIMENTS, PROTOCOL_TEMPLATES } from '../constants';
@@ -32,6 +33,7 @@ interface ExperimentViewProps {
 
 export const ExperimentView: React.FC<ExperimentViewProps> = ({ initialCreate, initialSelectedId }) => {
   const [experiments, setExperiments] = useState<Experiment[]>(MOCK_EXPERIMENTS);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId || null);
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
   
@@ -87,6 +89,13 @@ export const ExperimentView: React.FC<ExperimentViewProps> = ({ initialCreate, i
         }
     };
   }, []);
+
+  // Filtered Experiments
+  const filteredExperiments = experiments.filter(e => 
+    e.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    e.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    e.author.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Selected Experiment State
   const selectedExp = experiments.find(e => e.id === selectedId);
@@ -255,47 +264,108 @@ export const ExperimentView: React.FC<ExperimentViewProps> = ({ initialCreate, i
   return (
     <div className="flex h-full gap-6 relative">
       {/* List View */}
-      <div className={`${selectedId ? 'hidden lg:flex lg:w-1/3 xl:w-1/4' : 'w-full flex'} flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden`}>
-        <div className="p-4 border-b border-slate-100 flex justify-between items-center">
-          <h2 className="font-semibold text-slate-800">Experiments</h2>
-          <button 
-            onClick={() => setIsCreateModalOpen(true)}
-            className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            <Plus size={18} />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          {experiments.map(exp => (
-            <div 
-              key={exp.id}
-              onClick={() => setSelectedId(exp.id)}
-              className={`p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors ${selectedId === exp.id ? 'bg-indigo-50 border-l-4 border-l-indigo-500' : ''}`}
+      <div className={`${selectedId ? 'hidden lg:flex lg:w-1/3 xl:w-1/3' : 'w-full flex'} flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden`}>
+        <div className="p-4 border-b border-slate-100 flex flex-col gap-4">
+          <div className="flex justify-between items-center">
+            <h2 className="font-bold text-slate-800 tracking-tight">Experiments</h2>
+            <button 
+              onClick={() => setIsCreateModalOpen(true)}
+              className="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-200"
             >
-              <div className="flex justify-between items-start mb-1">
-                <span className="text-xs font-mono text-slate-400">{exp.id}</span>
-                <StatusBadge status={exp.status} />
-              </div>
-              <h3 className="text-sm font-semibold text-slate-800 mb-2 line-clamp-1">{exp.title}</h3>
-              <div className="flex items-center gap-3 text-xs text-slate-500">
-                <div className="flex items-center gap-1"><User size={12}/> {exp.author}</div>
-                <div className="flex items-center gap-1"><Calendar size={12}/> {exp.date}</div>
-              </div>
+              <Plus size={20} />
+            </button>
+          </div>
+
+          {/* Important Photos / Thumbnails Row */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+             {[
+               { color: 'bg-emerald-100', text: 'DNA' },
+               { color: 'bg-blue-100', text: 'HEK' },
+               { color: 'bg-indigo-100', text: 'GFP' },
+               { color: 'bg-amber-100', text: 'MTT' },
+               { color: 'bg-rose-100', text: 'PCR' },
+               { color: 'bg-purple-100', text: 'Cnf' }
+             ].map((photo, i) => (
+               <div 
+                 key={i} 
+                 className={`shrink-0 w-10 h-10 rounded-full ${photo.color} border-2 border-white shadow-sm flex items-center justify-center cursor-pointer hover:scale-110 transition-transform`}
+                 title={`Visual Highlight: ${photo.text}`}
+               >
+                 <span className="text-[10px] font-bold text-slate-500">{photo.text}</span>
+               </div>
+             ))}
+             <button className="shrink-0 w-10 h-10 rounded-full border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 hover:text-indigo-400 hover:border-indigo-200 transition-colors">
+               <Plus size={14} />
+             </button>
+          </div>
+
+          {/* Dedicated Search Only for Experiments */}
+          <div className="relative group">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={14} />
+            <input 
+              type="text"
+              placeholder="Filter experiments..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-slate-100/50 border border-transparent rounded-lg text-xs font-medium focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+            />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {filteredExperiments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 text-center text-slate-400">
+               <SearchIcon size={32} className="mb-4 opacity-20" />
+               <p className="text-sm font-medium">No experiments matching your search.</p>
             </div>
-          ))}
+          ) : (
+            filteredExperiments.map(exp => (
+              <div 
+                key={exp.id}
+                onClick={() => setSelectedId(exp.id)}
+                className={`p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors ${selectedId === exp.id ? 'bg-indigo-50 border-l-4 border-l-indigo-500' : ''}`}
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <span className="text-xs font-mono text-slate-400">{exp.id}</span>
+                  <StatusBadge status={exp.status} />
+                </div>
+                <h3 className="text-sm font-semibold text-slate-800 mb-2 line-clamp-1">{exp.title}</h3>
+                <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <div className="flex items-center gap-1"><User size={12}/> {exp.author}</div>
+                  <div className="flex items-center gap-1"><Calendar size={12}/> {exp.date}</div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
       {/* Detail View */}
-      {selectedExp && (
+      {selectedExp ? (
         <div className="flex-1 flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
           
           {/* Toolbar */}
           <div className="h-14 border-b border-slate-200 flex items-center justify-between px-6 bg-white shrink-0">
              <div className="flex items-center gap-4">
                <button onClick={() => setSelectedId(null)} className="lg:hidden mr-2 text-slate-400">Back</button>
-               <div>
-                  <h1 className="text-lg font-bold text-slate-800 leading-tight">{selectedExp.title}</h1>
+               <div className="flex-1">
+                  <input 
+                    type="text"
+                    className="text-lg font-bold text-slate-800 leading-tight bg-transparent border-none focus:ring-0 focus:outline-none w-full hover:bg-slate-50 rounded px-1 -ml-1 transition-colors"
+                    value={selectedExp.title}
+                    onChange={(e) => {
+                      const newTitle = e.target.value;
+                      setExperiments(prev => prev.map(exp => exp.id === selectedId ? { ...exp, title: newTitle } : exp));
+                    }}
+                  />
                   <span className="text-xs text-slate-500 font-mono">
                     {selectedExp.id} • {lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : 'Last edited 2 hours ago'}
                   </span>
@@ -342,7 +412,7 @@ export const ExperimentView: React.FC<ExperimentViewProps> = ({ initialCreate, i
               {/* Metadata Tags */}
               <div className="flex flex-wrap gap-2 mb-6">
                 {selectedExp.tags.map(tag => (
-                  <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs border border-slate-200">
+                  <span key={tag} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs border border-slate-200">
                     <Tag size={10} /> {tag}
                   </span>
                 ))}
@@ -453,7 +523,7 @@ export const ExperimentView: React.FC<ExperimentViewProps> = ({ initialCreate, i
                                      </button>
                                      <button 
                                         onClick={applySuggestion}
-                                        className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-colors shadow-lg shadow-indigo-900/50 flex items-center justify-center gap-1.5"
+                                        className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-50 text-white rounded-lg text-xs font-bold transition-colors shadow-lg shadow-indigo-900/50 flex items-center justify-center gap-1.5"
                                      >
                                         <Check size={14}/> Accept Changes
                                      </button>
@@ -489,6 +559,20 @@ export const ExperimentView: React.FC<ExperimentViewProps> = ({ initialCreate, i
             )}
           </div>
 
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-xl shadow-sm border border-slate-200 text-center p-12">
+            <div className="p-4 bg-indigo-50 rounded-full mb-6">
+                <FilePenLine size={48} className="text-indigo-400" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">Select an experiment to view</h3>
+            <p className="text-slate-500 max-w-sm mb-8">Choose a record from the list on the left or create a new one using the plus button.</p>
+            <button 
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
+            >
+              Start New Experiment
+            </button>
         </div>
       )}
 
@@ -640,7 +724,7 @@ export const ExperimentView: React.FC<ExperimentViewProps> = ({ initialCreate, i
   );
 };
 
-// Sub-component for AI Panel (unchanged but included to complete file)
+// Sub-component for AI Panel
 const AIPanel = ({ experiment, onClose }: { experiment: Experiment, onClose: () => void }) => {
   const [analysis, setAnalysis] = useState<AIAnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
