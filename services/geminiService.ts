@@ -151,6 +151,79 @@ export const generateExperimentPlan = async (prompt: string): Promise<Partial<Ex
    }
 }
 
+export const analyzeImageToExperiment = async (base64Image: string): Promise<Partial<Experiment>> => {
+  if (!apiKey) return { title: "API Key Missing", content: "", protocolSteps: [], tags: [] };
+
+  try {
+    // We strip the data URL prefix if present (e.g. "data:image/png;base64,")
+    const base64Data = base64Image.includes('base64,') 
+      ? base64Image.split('base64,')[1] 
+      : base64Image;
+
+    const response = await ai.models.generateContent({
+       model: 'gemini-2.5-flash-image', // Using Flash for speed/vision capabilities
+       contents: {
+         parts: [
+           {
+             inlineData: {
+               mimeType: 'image/jpeg',
+               data: base64Data
+             }
+           },
+           {
+             text: `Analyze this lab image. It might be handwritten notes, a whiteboard diagram, or a result image. 
+             Convert the visual information into a structured experiment.
+             1. Create a scientific Title.
+             2. Transcribe notes or describe the workflow in the Content section (Markdown).
+             3. Extract discrete Protocol Steps.
+             4. Generate relevant Tags.`
+           }
+         ]
+       }
+    });
+    
+    // We need to parse the text result into JSON manually since 2.5-flash-image implies nano/vision usage 
+    // where responseSchema isn't always fully supported in the SDK types the same way for vision tasks yet, 
+    // or we can use a secondary call to structure it. 
+    // However, to keep it performant, we'll ask for JSON in the text prompt and try to parse it.
+    
+    // Let's refine the prompt to ask for JSON specifically to make parsing easier.
+    // Re-running with specific JSON instruction:
+    
+    const jsonResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: {
+          parts: [
+            { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
+            { text: `Analyze this lab image (handwriting/diagram). Return ONLY valid JSON matching this structure:
+              {
+                "title": "Scientific Title",
+                "tags": ["tag1", "tag2"],
+                "content": "Detailed markdown notes...",
+                "protocolSteps": [{"instruction": "step 1"}]
+              }` 
+            }
+          ]
+        }
+    });
+
+    let text = jsonResponse.text || "{}";
+    // Clean markdown code blocks if present
+    text = text.replace(/```json/g, '').replace(/```/g, '');
+    
+    return JSON.parse(text);
+
+  } catch (error) {
+    console.error("Vision Analysis Failed", error);
+    return {
+       title: "Image Analysis Failed",
+       content: "Could not process image.",
+       tags: [],
+       protocolSteps: []
+    };
+  }
+}
+
 export const refineLabNotes = async (text: string, mode: 'fix' | 'scientific' | 'expand'): Promise<string> => {
    if (!apiKey) return text;
    

@@ -188,6 +188,11 @@ export const Inventory: React.FC<InventoryProps> = ({ initialTab = 'list' }) => 
          <div className="flex justify-between items-center">
             <h2 className="font-semibold text-slate-800 flex items-center gap-2"><Box size={20}/> Inventory & Storage</h2>
             <div className="flex gap-2">
+                {activeTab === 'list' && (
+                  <button onClick={() => alert(`Printing barcodes for ${samples.length} items...`)} className="px-3 py-1.5 text-sm bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 flex items-center gap-2">
+                    <Printer size={16} /> Print All
+                  </button>
+                )}
                 <button onClick={() => alert("Report exported!")} className="px-3 py-1.5 text-sm bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200">Export Report</button>
                 <button onClick={() => setIsAddItemModalOpen(true)} className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">+ Add Item</button>
             </div>
@@ -304,7 +309,7 @@ export const MolecularTools: React.FC = () => {
   const [selectedFeature, setSelectedFeature] = useState<PlasmidFeature | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState<PlasmidFeature | null>(null);
-  const [sequence, setSequence] = useState("ATGCGTACCGGTTAACCGGTTAACCGGTTAACCGGTTAACCGGTTAACCGGTTAACCGGTTAACCGGTTAACCGGTTA");
+  const [sequence, setSequence] = useState("ATGCGTACCGGTTAACCGGTTAACCGGTTAACCGGTTAACCGGTTAACCGGTTAACCGGTTAACCGGTTAACCGGTTAACCGGTTA");
   
   const plasmidSize = 4000;
   const cx = 300;
@@ -355,21 +360,21 @@ export const MolecularTools: React.FC = () => {
   };
 
   return (
-    <div className={`rounded-xl shadow-xl border h-full flex flex-col overflow-hidden transition-all duration-500 ${activeTool === 'plasmid' ? 'bg-[#0f172a] border-slate-800' : 'bg-white border-slate-200'}`}>
-       <div className={`p-6 border-b flex justify-between items-center ${activeTool === 'plasmid' ? 'border-slate-800 text-white' : 'border-slate-100 text-slate-800'}`}>
+    <div className="rounded-xl shadow-xl border h-full flex flex-col overflow-hidden transition-all duration-500 bg-white border-slate-200">
+       <div className="p-6 border-b flex justify-between items-center border-slate-100 text-slate-800">
            <div className="flex items-center gap-3">
-             <div className={`p-2 rounded-lg ${activeTool === 'plasmid' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-50 text-indigo-600'}`}>
+             <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
                 <Dna size={24}/>
              </div>
              <h2 className="font-bold text-xl tracking-tight">Molecular Suite</h2>
            </div>
-           <div className={`flex gap-1 p-1 rounded-xl ${activeTool === 'plasmid' ? 'bg-slate-800' : 'bg-slate-100'}`}>
+           <div className="flex gap-1 p-1 rounded-xl bg-slate-100">
                {[
                  { id: 'sequence', icon: Code },
                  { id: 'plasmid', icon: Microscope },
                  { id: 'crispr', icon: Scissors }
                ].map(tool => (
-                   <button key={tool.id} onClick={() => setActiveTool(tool.id as any)} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${activeTool === tool.id ? (activeTool === 'plasmid' ? 'bg-emerald-500 text-white shadow-lg' : 'bg-white text-indigo-600 shadow-sm') : (activeTool === 'plasmid' ? 'text-slate-400 hover:text-white' : 'text-slate-500')}`}>
+                   <button key={tool.id} onClick={() => setActiveTool(tool.id as any)} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${activeTool === tool.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}>
                        <tool.icon size={14}/> {tool.id}
                    </button>
                ))}
@@ -377,7 +382,6 @@ export const MolecularTools: React.FC = () => {
        </div>
 
        <div className="flex-1 overflow-hidden relative">
-           {activeTool === 'plasmid' && <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-900/10 via-transparent to-transparent opacity-50 pointer-events-none"></div>}
            <div className="h-full overflow-auto p-8">
                {activeTool === 'sequence' && (
                     <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -406,15 +410,16 @@ export const MolecularTools: React.FC = () => {
                {activeTool === 'plasmid' && (
                  <div className="flex flex-col lg:flex-row h-full items-center justify-center gap-12">
                      <div className="relative shrink-0 animate-in zoom-in-95 fade-in duration-700">
-                         <svg width="600" height="600" viewBox="0 0 600 600" className="drop-shadow-2xl" onClick={() => setSelectedFeature(null)}>
-                             <circle cx={cx} cy={cy} r={radius} fill="none" stroke="#1e293b" strokeWidth={trackWidth} />
+                         <svg width="600" height="600" viewBox="0 0 600 600" className="drop-shadow-xl" onClick={() => setSelectedFeature(null)}>
+                             <circle cx={cx} cy={cy} r={radius} fill="none" stroke="#f1f5f9" strokeWidth={trackWidth} />
                              {renderFeatures()}
-                             <circle cx={cx} cy={cy} r="100" fill="#0f172a" stroke="#334155" strokeWidth="2" />
-                             <text x={cx} y={cy} textAnchor="middle" dy="-10" className="text-2xl font-bold fill-white tracking-tight">pCAS9-MOD</text>
-                             <text x={cx} y={cy} textAnchor="middle" dy="25" className="text-xs font-mono fill-emerald-400 tracking-widest uppercase">4,000 bp</text>
+                             <circle cx={cx} cy={cy} r="100" fill="#ffffff" stroke="#e2e8f0" strokeWidth="2" />
+                             <text x={cx} y={cy} textAnchor="middle" dy="-10" className="text-2xl font-bold fill-slate-800 tracking-tight">pCAS9-MOD</text>
+                             <text x={cx} y={cy} textAnchor="middle" dy="25" className="text-xs font-mono fill-emerald-600 tracking-widest uppercase font-bold">4,000 bp</text>
                          </svg>
                      </div>
-                     <div className="w-full max-w-sm bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-6">
+                     {/* Feature Inspector - Kept Dark as requested */}
+                     <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-6">
                         <div className="flex items-center justify-between">
                             <h3 className="font-bold text-white text-lg">Feature Inspector</h3>
                             <button onClick={() => { setEditFormData({ name: 'New Feature', start: 0, end: 500, type: 'gene', color: '#6366f1', direction: 1 }); setIsEditing(true); }} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-emerald-400 transition-colors"><Plus size={18}/></button>
